@@ -10,10 +10,10 @@ p.start(0)                      # Start PWM output, Duty Cycle = 0
 
 try:
     while True:
-        for dc in range(0, 101, 5):
+        for dc in range(0, 101, 5):     # increase Duty Cycle to 100% by 5% increments
             p.ChangeDutyCycle(dc)
             time.sleep(0.1)
-        for dc in range(100, -1, -5):
+        for dc in range(100, -1, -5):   # decrease Duty Cycle from 100% by 5% decrements
             p.ChangeDutyCycle(dc)
             time.sleep(0.1)
         time.sleep(0.5)
