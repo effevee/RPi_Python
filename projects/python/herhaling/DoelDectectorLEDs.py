@@ -45,10 +45,13 @@ try:
 
     # resultaat na shots
     print()
-    print('{} goals {} paal {} buiten in {} sjots'.format(aantalGoals, aantalPaal, aantalBuiten, aantalSjots))
+    print('{} goals - {} paal - {} buiten in {} sjots'.format(aantalGoals, aantalPaal, aantalBuiten, aantalSjots))
 
+except KeyboardInterrupt:
+    print('programma gestopt met Ctrl-C')
+    
 except Exception as E:
-    print(E)
+    print('fout ', E)
     
 finally:
     gpio.cleanup()

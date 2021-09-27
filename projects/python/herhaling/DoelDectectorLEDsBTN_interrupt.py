@@ -5,7 +5,8 @@ import time
 # constanten
 pinRood = 18
 pinGroen = 24
-pinButton = 12
+pinSjotten = 12
+pinStoppen = 26
 diktePaal = 10
 x_max = 900
 y_max = 500
@@ -15,28 +16,46 @@ aantalSjots = 0
 aantalGoals = 0
 aantalPaal = 0
 aantalBuiten = 0
+releaseSjotten = False
+releaseStoppen = False
+
+def button_released(channel):
+    global releaseSjotten, releaseStoppen # nodig om de variabele te wijzigen in de functie
+    global pinSjotten, pinStoppen
+    if channel == pinSjotten:
+        releaseSjotten = True
+    if channel == pinStoppen:
+        releaseStoppen = True
 
 try:
     # LEDs initialiseren
     gpio.setmode(gpio.BCM)     # gpio nummering
     gpio.setup([pinRood, pinGroen], gpio.OUT)
     
-    # button initialiseren met interne pullup weerstand
-    gpio.setup(pinButton, gpio.IN, gpio.PUD_UP)
+    # buttons initialiseren met interne pullup weerstand
+    gpio.setup(pinSjotten, gpio.IN, gpio.PUD_UP)
+    gpio.setup(pinStoppen, gpio.IN, gpio.PUD_UP)
 
+    # toevoegen van een interrupt op de buttons. Bij het detecteren van een stijgende flank (loslaten button) wordt callback funtie opgeroepen
+    gpio.add_event_detect(pinSjotten, gpio.RISING, callback=button_released, bouncetime=60)
+    gpio.add_event_detect(pinStoppen, gpio.RISING, callback=button_released, bouncetime=60)
+    
     # oneindige lus
     while True:
         
         # LEDs uit
         gpio.output([pinGroen, pinRood], gpio.LOW)
         
-        # is button ingedrukt ?
-        if gpio.input(pinButton) == 0:
+        # is stop button gedrukt ?
+        if releaseStoppen:
+            break
+        
+        # is button ingedrukt en losgelaten ?
+        if releaseSjotten:
             
-            # wacht tot button losgelaten wordt (debouncing)
-            while gpio.input(pinButton) == 0:
-                time.sleep(0.05)
-                
+            # status van button reseten
+            releaseSjotten = False
+            
             # aantalSjots verhogen
             aantalSjots += 1
             
@@ -67,6 +86,8 @@ except KeyboardInterrupt:
     print('Programma gestopt met Crtl-C')
     
 finally:
+    gpio.remove_event_detect(pinSjotten)
+    gpio.remove_event_detect(pinStoppen)
     gpio.cleanup()
 
 
