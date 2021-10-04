@@ -2,47 +2,53 @@ import random
 import RPi.GPIO as gpio  # module om gpio poorten aan te spreken
 import PySimpleGUI as sg
 import json
-import os
 from PIL import Image, ImageDraw
 
 # constanten
 pinRood = 18
 pinGroen = 24
 diktePaal = 10
-x_max = 900
-y_max = 500
+xMax = 900
+yMax = 500
+diaBal = 16 # pixels
 
-# variabelen
+# globale variabelen
 aantalGoals = 0
 aantalPaal = 0
 aantalMissers = 0
 
-# ophalen vorige resultaten als de json file bestaat
-if os.path.isfile('statDoeldetector.json'):
-    # uitlezen json file
-    with open('statDoeldetector.json', 'r') as jsonFile:
-        resultaat = json.load(jsonFile)
-    # initialiseer resultaten
-    aantalGoals = resultaat['goals']
-    aantalMissers = resultaat['missers']
-    aantalPaal = resultaat['paal']
-
 # Define the window's contents
-layout = [[sg.Text("Goals"), sg.Input(key="-GOALS-",size=(8,1),default_text=aantalGoals),
-           sg.Text("Missers"), sg.Input(key="-MISSERS-",size=(8,1),default_text=aantalMissers),
-           sg.Text("Paal"), sg.Input(key="-PAAL-",size=(8,1),default_text=aantalPaal)],
+layout = [[sg.Text("Goals"), sg.Input(key="-GOALS-",size=(8,1)),
+           sg.Text("Missers"), sg.Input(key="-MISSERS-",size=(8,1)),
+           sg.Text("Paal"), sg.Input(key="-PAAL-",size=(8,1))],
           [sg.Button('Sjot naar goal'), sg.Button('Stoppen')],
           [sg.Image(key="-IMAGE-",source="goal.png")]]
 
 # Create the window
-window = sg.Window('Doeldetector', layout)
+window = sg.Window('Doeldetector', layout, finalize=True) # finalize parameter=True om ervoor te zorgen dat het scherm volledig getekend is
 
 try:
+    # ophalen vorige resultaten als de json file bestaat
+    resultaat = None
+    # uitlezen json file
+    with open('statDoeldetector.json', 'r') as jsonFile:
+        resultaat = json.load(jsonFile)
+    # als er iets ingelezen werd
+    if resultaat is not None:
+        # initialiseer globale variabelen
+        aantalGoals = resultaat['goals']
+        aantalMissers = resultaat['missers']
+        aantalPaal = resultaat['paal']
+        # update waarden in window
+        window["-GOALS-"].update(str(aantalGoals))
+        window["-MISSERS-"].update(str(aantalMissers))
+        window["-PAAL-"].update(str(aantalPaal))
+
     # LEDs initialiseren
     gpio.setmode(gpio.BCM)     # gpio nummering
     gpio.setup([pinRood, pinGroen], gpio.OUT)
 
-    # lus sjots
+    # oneindige lus
     while True:
         # wacht op window event
         event, values = window.read()
@@ -58,31 +64,35 @@ try:
         # Sjot naar goal event
         if event == "Sjot naar goal":
             # sjot de bal
-            x = random.randint(0, x_max)
-            y = random.randint(0, y_max)
+            xBal = random.randint(0, xMax)
+            yBal = random.randint(0, yMax)
             # resultaat 
-            if x>300 and x<=600 and y<=220:     # goal
+            if xBal>300 and xBal<=600 and yBal<=220:     # goal
                 aantalGoals += 1
                 window["-GOALS-"].update(str(aantalGoals))
                 gpio.output(pinGroen, gpio.HIGH)
                 gpio.output(pinRood, gpio.LOW)
-            elif x<290 or x>610 or y>230:       # buiten
+            elif xBal<290 or xBal>610 or yBal>230:       # buiten
                 aantalMissers += 1
                 window["-MISSERS-"].update(str(aantalMissers))
                 gpio.output(pinGroen, gpio.LOW)
                 gpio.output(pinRood, gpio.HIGH)
-            else:                               # paal
+            else:                                        # paal
                 aantalPaal += 1
                 window["-PAAL-"].update(str(aantalPaal))
                 gpio.output([pinGroen,pinRood], gpio.HIGH)
-            # image goal_ball.png maken
+            # ophalen goal.png
             im = Image.open("goal.png")
-            xbal = x - 4          # correctie halve diameter bal
-            ybal = 500 - y + 4    # correctie halve diameter bal
-            #print(xbal,ybal)
-            draw = ImageDraw.Draw(im)
-            draw.ellipse([(xbal,ybal),(xbal+8, ybal+8)],fill=(255,0,0))
+            draw = ImageDraw.Draw(im)         # van het beeld een tekenobject maken zodat erop kan getekend worden
+            # positie bal
+            xPos = xBal - diaBal//2           # correctie halve diameter bal
+            yPos = yMax - yBal - diaBal//2    # correctie halve diameter bal, Yas omgekeerd (LB is 0,0)
+            print(xPos,yPos)
+            # teken bal
+            draw.ellipse([(xPos,yPos),(xPos+diaBal, yPos+diaBal)],fill="red")
+            # beeld opslaan als goal_ball.png
             im.save("goal_ball.png")
+            # window updaten met goal_ball.png
             window["-IMAGE-"].update("goal_ball.png")
 
 except KeyboardInterrupt:
