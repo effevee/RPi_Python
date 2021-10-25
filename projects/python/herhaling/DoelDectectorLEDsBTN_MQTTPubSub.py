@@ -12,7 +12,8 @@ diktePaal = 10
 x_max = 900
 y_max = 500
 
-BROKER = "broker.hivemq.com"
+#BROKER = "broker.hivemq.com"
+BROKER="127.0.0.1"
 UNIQUE_ID = "FrankV16"
 
 # variabelen
