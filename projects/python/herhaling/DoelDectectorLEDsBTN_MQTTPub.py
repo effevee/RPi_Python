@@ -12,7 +12,8 @@ diktePaal = 10
 x_max = 900
 y_max = 500
 
-BROKER = "broker.hivemq.com"
+#BROKER = "broker.hivemq.com"
+BROKER = "raspifrank"  # naam raspberry pi
 UNIQUE_ID = "FrankV16"
 
 # variabelen
