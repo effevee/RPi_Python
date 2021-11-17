@@ -1,13 +1,14 @@
 import serial
 import time
+import sys
 import RPi.GPIO as gpio  # module om gpio poorten aan te spreken
 
 # pins L293D motor controller (dual H-Bridge)
 # IN1  IN2  direction
-#  L    L      OFF
+#  L    L      ---
 #  H    L      CW
 #  L    H      CCW
-#  H    H      OFF
+#  H    H      ---
 EN1=17
 IN1=27
 IN2=22
@@ -26,25 +27,23 @@ try:
     pwmSnelheid.start(0)                      # 0% dutycycle
 
     # maken van serial object
-    ser=serial.Serial(PORT, BAUD)
+    ser=serial.Serial(PORT, BAUD, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS)
     time.sleep(1)
     
 except Exception as E:
     print("Geen connectie mogelijk op de seriële poort")
     if debug:
         print(E)
-    exit()
+    sys.exit()
     
 try:
     
     while True:
         try:
             # lezen van seriële poort
-            x=ser.readline()
-            # decoderen message
-            waarde=int(x.decode('utf-8'))
+            waarde=int(ser.readline())
             if debug:
-                print("waarde: {}".format(waarde))
+                print("draaiwijze: {} - snelheid: {}".format("CCW" if waarde<0 else "CW",abs(waarde)))
             # draairichting
             if waarde < 0:
                 # CCW
@@ -68,4 +67,5 @@ except:
 
 finally:
     ser.close()
+    pwmSnelheid.stop()
     gpio.cleanup()
