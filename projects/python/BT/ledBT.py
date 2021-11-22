@@ -13,6 +13,8 @@ s.bind((MAC,PORT))
 s.listen(1)
 
 cl, addr = s.accept()
+print("MAC client: {}".format(addr))
+
 try:
     while True:
         data = cl.recv(1024)
@@ -31,3 +33,4 @@ except Exception as E:
 finally:
     cl.close()
     s.close()
+    gpio.cleanup()

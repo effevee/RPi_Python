@@ -26,6 +26,7 @@ s.listen(1)
 
 # wachten op client connectie
 cl, addr = s.accept()
+print("MAC client: {}".format(addr))
 
 try:
     # oneidige lus
