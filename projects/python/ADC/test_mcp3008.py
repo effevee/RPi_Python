@@ -1,4 +1,4 @@
-# uitlezen van een potmeter mbv MCP3008
+# uitlezen van een potmeter mbv MCP3008 op channel 3 (CH3)
 #
 # MCP3008      RPi       POT
 # n°  pin   gpio pin     pin
@@ -28,16 +28,16 @@ adc.open(0, 0)
 adc.max_speed_hz = 1000000 # 1MHz
 
 # functie om analoge waarde op te halen van de MCP3008 channel (0-7)
-def read_spi(channel):
-    # 3 bytes doorsturen als commando
-    # byte 0 : 1
-    # byte 1 : bit0=1 (single-ended mode) + bit1 tem bit3=channel (0-7), daarna shift 4 posities naar links
-    # byte 2 : 0
+def read_spi(channel=0):
+    # 3 bytes versturen naar MOSI van MCP3008:
+    # byte 1: b00000001 : start byte
+    # byte 2: b1cccxxxx : 1=single channel mode + ccc=bitwaare van channel (0-7) vb channel 3 = 011
+    # byte 3: bxxxxxxxx : niet relevante byte
     spidata = adc.xfer2([1, (8+channel)<<4, 0])
-    # we krijgen 3 bytes terug als antwoord die we als volgt decoderen:
-    # byte 0 : negeren
-    # byte 1 : and met 3 en 8 posities naar links shiften
-    # byte 2 : optellen bij byte 1
+    # 3 byte antwoord op MISO van MCP3008:
+    # byte 1: bxxxxxxxx : niet relevante byte
+    # byte 2: bxxxxx0ii : bit 8 en 9 van 10bit antwoord
+    # byte 3: biiiiiiii : bit 0 tem bit 7 van 10bit antwoord
     data = ((spidata[1] & 3)<<8) + spidata[2]
     return data
     
