@@ -31,16 +31,14 @@ print("MAC client: {}".format(addr))
 try:
     # oneidige lus
     while True:
+        temp = -1
+        hum = -1
         try:
             # lees temperatuur en vochtigheid
             temp = dhtDev.temperature
             hum = dhtDev.humidity
             # debug info
             print('temperature: {}*C - humidity: {}%'.format(temp, hum))
-            # versturen via BT in de vorm temp,hum
-            cl.send('{},{}\r\n'.format(temp,hum).encode())
-            # even wachten
-            time.sleep(2)
         
         except RuntimeError as E:
             print(E)
@@ -50,6 +48,12 @@ try:
         except Exception as E:
             dhtDev.exit()
             raise E
+        
+        # versturen via BT in de vorm temp,hum
+        cl.send('{},{}\r\n'.format(temp,hum).encode('utf-8'))
+        # even wachten
+        time.sleep(2)
+
         
 finally:
     dhtDev.exit()

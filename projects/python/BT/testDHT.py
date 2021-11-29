@@ -29,6 +29,10 @@ try:
             time.sleep(2)
             continue
         
+        except KeyboardInterrupt as E:
+            print('Programma onderbroken met Ctrl-C')
+            break
+        
         except Exception as E:
             dhtDev.exit()
             raise E
