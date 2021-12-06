@@ -51,6 +51,7 @@ try:
         
         # versturen via BT in de vorm temp,hum
         cl.send('{},{}\r\n'.format(temp,hum).encode('utf-8'))
+        
         # even wachten
         time.sleep(2)
 
