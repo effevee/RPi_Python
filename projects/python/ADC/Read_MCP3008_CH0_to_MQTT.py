@@ -1,4 +1,5 @@
-# uitlezen van een LDR mbv MCP3008 op channel 3 (CH3)
+# uitlezen van een LDR mbv MCP3008 op channel 0 (CH3)
+# en doorsturen naar Node-Red via MQTT
 #
 # MCP3008      RPi       LDR
 # n°  pin   gpio pin     pin
@@ -12,16 +13,15 @@
 # 10  CE      8  SPICE0
 #  9  Dgnd       GND
 # ==========================
-#  4  CH3    ----------   x
+#  1  CH0    ----------   x
 # ==========================
 
 import spidev
 import time
 import paho.mqtt.publish as publish
-import json
 
 SPI_BUS=0
-SPI_CE=0            # CE0
+SPI_CE0=0           # CE0
 MAX_FREQ=1000000    # 1 MHz 
 VREF=3.3            # V
 MAX_VAL=1023.0      # 10bit ADC
@@ -47,30 +47,27 @@ def read_spi(channel=0):
 try:
     # aanmaken sp object (spi)
     sp = spidev.SpiDev()
-    sp.open(SPI_BUS, SPI_CE)
+    sp.open(SPI_BUS, SPI_CE0)  # slave 0
     sp.max_speed_hz = MAX_FREQ # 1MHz
 
     while True:
         # uitlezen channel 0 van MCP3008
-        waarde = read_spi(channel=3)
+        waarde = read_spi(channel=0)
         
         # omrekenen naar juiste spanning
         spanning = waarde / MAX_VAL * VREF
         
         # debug info
         print('ADC waarde: %4d - spanning: %.2f Volt'%(waarde, spanning))
-        
-        # payload voor MQTT
-        payload = json.dumps(spanning)
 
         # Versturen van data met MQTT,
         # 1ste param = topic
         # 2de param = data
         # 3de param = broker
-        publish.single("frankv16/LDR1val",payload,hostname=HOST)
+        publish.single("frankv16/LDRval1", spanning, hostname=HOST)
 
         # wachten
-        time.sleep(1)
+        time.sleep(2)
         
 except KeyboardInterrupt as E:
     print('Programma gestopt met Ctrl-C')
