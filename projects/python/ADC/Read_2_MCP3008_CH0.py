@@ -38,7 +38,7 @@ SPI_CE0=0           # CE0
 SPI_CE1=1           # CE1
 MAX_FREQ=1000000    # 1 MHz 
 VREF=3.3            # V
-MAX_VAL=1023.0      # 10bit ADC
+MAX_VAL=(2**10)-1   # 10bit ADC
 
 sp1=None
 sp2=None
@@ -69,8 +69,8 @@ try:
 
     while True:
         # uitlezen channels van 2 slave MCP3008
-        waarde1 = read_spi(sp1, channel=0)
-        waarde2 = read_spi(sp2, channel=0)
+        waarde1 = read_spi(sp=sp1, channel=0)
+        waarde2 = read_spi(sp=sp2, channel=0)
          
         # omrekenen naar juiste spanning
         spanning1 = waarde1 / MAX_VAL * VREF

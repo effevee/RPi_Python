@@ -23,12 +23,12 @@ SPI_BUS=0
 SPI_CE=0            # CE0
 MAX_FREQ=1000000    # 1 MHz 
 VREF=3.3            # V
-MAX_VAL=1023.0      # 10bit ADC
+MAX_VAL=(2**10)-1   # 10bit ADC
 
-sp=None
+sp0=None
 
 # functie om analoge waarde op te halen van de MCP3008 channel (0-7)
-def read_spi(channel=0):
+def read_spi(sp, channel=0):
     # 3 bytes versturen van RPi MOSI naar MCP3008 DIN:
     # byte 1: b00000001 : start byte
     # byte 2: b1cccxxxx : 1=single channel mode + ccc=bitwaarde van channel (0-7)
@@ -44,14 +44,14 @@ def read_spi(channel=0):
     
 try:
     # aanmaken sp object (spi)
-    sp = spidev.SpiDev()
-    sp.open(SPI_BUS, SPI_CE)
-    sp.max_speed_hz = MAX_FREQ # 1MHz
+    sp0 = spidev.SpiDev()
+    sp0.open(SPI_BUS, SPI_CE)
+    sp0.max_speed_hz = MAX_FREQ # 1MHz
 
     while True:
         # uitlezen channels van MCP3008
-        waarde1 = read_spi(channel=0)
-        waarde2 = read_spi(channel=1)
+        waarde1 = read_spi(sp=sp0, channel=0)
+        waarde2 = read_spi(sp=sp0, channel=1)
          
         # omrekenen naar juiste spanning
         spanning1 = waarde1 / MAX_VAL * VREF
@@ -67,5 +67,5 @@ except KeyboardInterrupt as E:
     print('Programma gestopt met Ctrl-C')
     
 finally:
-    if sp is not None:
-        sp.close()
+    if sp0 is not None:
+        sp0.close()

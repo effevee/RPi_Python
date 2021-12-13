@@ -39,7 +39,7 @@ SPI_CE0=0           # CE0
 SPI_CE1=1           # CE1
 MAX_FREQ=1000000    # 1 MHz 
 VREF=3.3            # V
-MAX_VAL=1023.0      # 10bit ADC
+MAX_VAL=(2**10)-1   # 10bit ADC
 HOST = "broker.hivemq.com"
 
 sp1=None

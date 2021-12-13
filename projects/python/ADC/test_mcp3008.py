@@ -44,7 +44,7 @@ def read_spi(channel=0):
 try:
     while True:
         # uitlezen channel 3 van MCP3008
-        waarde = read_spi(channel=3)
+        waarde = read_spi(channel=0)
         
         # omrekenen naar spanning
         spanning = waarde / 1023.0 * VCC
