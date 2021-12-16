@@ -1,4 +1,4 @@
-# 3 LEDs afwisselend 2s laten oplichten op GPA0, GPA1 en GPA2 poorten van MCP23017
+# 3 LEDs afwisselend 1s laten oplichten op GPA0, GPA1 en GPA2 poorten van MCP23017
 #
 #  MCP23017      RPi       LED
 #  n°  pin    gpio  pin
@@ -26,28 +26,34 @@ I2CADR=0x20
 
 # MCP23017 registers
 IODIRA=0x00   # GPA poorten definieren als input (1) of output (0)
+IODIRB=0x01   # GPB poorten definieren als input (1) of output (0)
 GPIOA=0x12    # GPA poorten lezen
+GPIOB=0x13    # GPB poorten lezen
 OLATA=0x14    # GPA poorten schrijven
+OLATB=0x15    # GPB poorten schrijven
 
-# lijst met MCP2307 GPA waarden van de leds
-LEDS=[0x01, 0x02, 0x04]
-
+# dictionary met MCP2307 GPA/GPB waarden van de leds
+LEDS={'GPA0':0x01, 'GPA1':0x02, 'GPA2':0x04}
 
 try:
     # I2C bus initialiseren
     bus = smbus.SMBus(I2CBUS)
     
-    # MCP23017 GPA poorten als output (0) definieren
+    # MCP23017 GPA/GPB poorten als output (0) definieren
     bus.write_byte_data(I2CADR, IODIRA, 0b00000000)
+    bus.write_byte_data(I2CADR, IODIRB, 0b00000000)
     
     # oneindige lus
     while True:
         # LEDs afwisselend aan/afzetten
-        for ledmask in LEDS:
+        for port, mask in LEDS.items():
             # 1 led aanzetten volgens mask
-            bus.write_byte_data(I2CADR, OLATA, ledmask)
+            if 'GPA' in port:
+                bus.write_byte_data(I2CADR, OLATA, mask)
+            else:
+                bus.write_byte_data(I2CADR, OLATB, mask)
             # wachten
-            time.sleep(2)
+            time.sleep(1)
 
 except KeyboardInterrupt as E:
     print('Programma onderbroken met Ctrl-C')
@@ -58,6 +64,7 @@ except Exception as E:
 finally:
     # leds afzetten
     bus.write_byte_data(I2CADR, OLATA, 0b00000000)
+    bus.write_byte_data(I2CADR, OLATB, 0b00000000)
     # I2C bus afzetten
     bus.close()
             

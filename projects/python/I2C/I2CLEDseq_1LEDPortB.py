@@ -1,9 +1,8 @@
-# 3 LEDs afwisselend 1s laten oplichten op GPA0, GPA1 en GPA2 poorten van MCP23017
-# sequentie laten starten via een drukknop op poort GPA7 van de MCP23017
+# 3 LEDs afwisselend 1s laten oplichten op GPA0, GPA1 en GPB7 poorten van MCP23017
 #
-#  MCP23017      RPi       
+#  MCP23017      RPi       LED
 #  n°  pin    gpio  pin
-#  ==============================
+#  ===========================
 #   9  VDD          3V3
 #  10  VSS          GND
 #  12  SCL      3   SCL1
@@ -12,13 +11,11 @@
 #  16  A1           GND
 #  17  A2           GND
 #  18  RESET        3V3
-#  ==============================
-#  21  GPA0                LED1
-#  22  GPA1                LED2
-#  23  GPA2                LED3
-# ===============================
-#  28  GPA7                BUTTON
-# ===============================
+#  ===========================
+#  21  GPA0                 1
+#  22  GPA1                 2
+#   8  GPB7                 3
+# ============================
 
 import smbus
 import time
@@ -36,34 +33,18 @@ OLATA=0x14    # GPA poorten schrijven
 OLATB=0x15    # GPB poorten schrijven
 
 # dictionary met MCP2307 GPA/GPB waarden van de leds
-LEDS={'GPA0':0x01, 'GPA1':0x02, 'GPA2':0x04}
-
-# button op GPA7
-BUTTON=0x80
-buttonPressed=False
+LEDS={'GPA0':0x01, 'GPA1':0x02, 'GPB7':0x80}
 
 try:
     # I2C bus initialiseren
     bus = smbus.SMBus(I2CBUS)
     
-    # MCP23017 GPA/GPB poorten als output (0) definieren, GPA7 als input (1)
-    bus.write_byte_data(I2CADR, IODIRA, 0b10000000)
+    # MCP23017 GPA/GPB poorten als output (0) definieren
+    bus.write_byte_data(I2CADR, IODIRA, 0b00000000)
     bus.write_byte_data(I2CADR, IODIRB, 0b00000000)
     
     # oneindige lus
     while True:
-
-        # wachten op druk op knop
-        while not buttonPressed:
-            # waarde pins lezen
-            data = bus.read_byte_data(I2CADR, GPIOA)
-            # is button gedrukt ?
-            if data == BUTTON:
-                buttonPressed = True
-            else:
-                # wachten
-                time.sleep(0.1)
-        
         # LEDs afwisselend aan/afzetten
         for port, mask in LEDS.items():
             # 1 led aanzetten volgens mask

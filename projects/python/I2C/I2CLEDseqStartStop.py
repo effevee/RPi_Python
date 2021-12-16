@@ -1,5 +1,5 @@
 # 3 LEDs afwisselend 1s laten oplichten op GPA0, GPA1 en GPA2 poorten van MCP23017
-# sequentie laten starten via een drukknop op poort GPA7 van de MCP23017
+# sequentie laten starten/stoppen via een drukknop op poort GPA7 van de MCP23017
 #
 #  MCP23017      RPi       
 #  n°  pin    gpio  pin
@@ -21,7 +21,7 @@
 # ===============================
 
 import smbus
-import time
+import asyncio
 
 # I2C bus en adres
 I2CBUS=1
@@ -40,32 +40,38 @@ LEDS={'GPA0':0x01, 'GPA1':0x02, 'GPA2':0x04}
 
 # button op GPA7
 BUTTON=0x80
-buttonPressed=False
 
-try:
-    # I2C bus initialiseren
-    bus = smbus.SMBus(I2CBUS)
+# globale variabelen
+class gvars:
+    started=False
+    debounce_time = 0.02
     
-    # MCP23017 GPA/GPB poorten als output (0) definieren, GPA7 als input (1)
-    bus.write_byte_data(I2CADR, IODIRA, 0b10000000)
-    bus.write_byte_data(I2CADR, IODIRB, 0b00000000)
-    
-    # oneindige lus
+# co-routine om button te checken
+async def button_pressed():
     while True:
-
-        # wachten op druk op knop
-        while not buttonPressed:
-            # waarde pins lezen
-            data = bus.read_byte_data(I2CADR, GPIOA)
-            # is button gedrukt ?
-            if data == BUTTON:
-                buttonPressed = True
-            else:
-                # wachten
-                time.sleep(0.1)
-        
+        # waarde pins lezen
+        data = bus.read_byte_data(I2CADR, GPIOA)
+        # is button gedrukt ?
+        if data >= BUTTON:
+            # button gedrukt
+            gvars.started = not gvars.started
+            # debounce
+            while data >= BUTTON:
+                data = bus.read_byte_data(I2CADR, GPIOA)
+                await asyncio.sleep(gvars.debounce_time)
+        # wachten
+        await asyncio.sleep(gvars.debounce_time)
+            
+#co_routine om leds te flashen
+async def flash_leds():
+    while True:
         # LEDs afwisselend aan/afzetten
         for port, mask in LEDS.items():
+            # leds flashen ?
+            if not gvars.started:
+                bus.write_byte_data(I2CADR, OLATA, 0b00000000)  # bank 0 afzetten
+                bus.write_byte_data(I2CADR, OLATB, 0b00000000)  # bank 1 afzetten
+                break
             # 1 led aanzetten volgens mask
             if 'GPA' in port:
                 bus.write_byte_data(I2CADR, OLATA, mask)
@@ -74,8 +80,27 @@ try:
                 bus.write_byte_data(I2CADR, OLATA, 0b00000000)  # bank 0 afzetten
                 bus.write_byte_data(I2CADR, OLATB, mask)
             # wachten
-            time.sleep(1)
+            await asyncio.sleep(1)
+        # even wachten
+        await asyncio.sleep(gvars.debounce_time)
 
+        
+try:
+    # I2C bus initialiseren
+    bus = smbus.SMBus(I2CBUS)
+    
+    # MCP23017 GPA/GPB poorten als output (0) definieren, GPA7 als input (1)
+    bus.write_byte_data(I2CADR, IODIRA, 0b10000000)
+    bus.write_byte_data(I2CADR, IODIRB, 0b00000000)
+    
+    # event loop scheduler initialiseren
+    loop = asyncio.get_event_loop()
+    # taken op event loop queue te zetten
+    loop.create_task(button_pressed())
+    loop.create_task(flash_leds())
+    # taken starten
+    loop.run_forever()
+    
 except KeyboardInterrupt as E:
     print('Programma onderbroken met Ctrl-C')
     
@@ -88,6 +113,9 @@ finally:
     bus.write_byte_data(I2CADR, OLATB, 0b00000000)
     # I2C bus afzetten
     bus.close()
+    # event loop scheduler afzetten
+    loop.close()
+    
             
 
 
