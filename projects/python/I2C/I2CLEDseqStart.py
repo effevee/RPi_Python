@@ -30,16 +30,17 @@ I2CADR=0x20
 # MCP23017 registers
 IODIRA=0x00   # GPA poorten definieren als input (1) of output (0)
 IODIRB=0x01   # GPB poorten definieren als input (1) of output (0)
+GPPUA=0x0C    # GPA pullup activeren voor input
+GPPUB=0x0D    # GPB pullup activeren voor input 
 GPIOA=0x12    # GPA poorten lezen
 GPIOB=0x13    # GPB poorten lezen
 OLATA=0x14    # GPA poorten schrijven
 OLATB=0x15    # GPB poorten schrijven
 
 # dictionary met MCP2307 GPA/GPB waarden van de leds
-LEDS={'GPA0':0x01, 'GPA1':0x02, 'GPA2':0x04}
+LEDS={'GPA0':0b00000001, 'GPA1':0b00000010, 'GPA2':0b00000100}
 
 # button op GPA7
-BUTTON=0x80
 buttonPressed=False
 
 try:
@@ -50,6 +51,9 @@ try:
     bus.write_byte_data(I2CADR, IODIRA, 0b10000000)
     bus.write_byte_data(I2CADR, IODIRB, 0b00000000)
     
+    # we maken gebruik van de interne pullup voor GPA7
+    bus.write_byte_data(I2CADR, GPPUA, 0b10000000)
+
     # oneindige lus
     while True:
 
@@ -58,16 +62,16 @@ try:
             # waarde pins lezen
             data = bus.read_byte_data(I2CADR, GPIOA)
             # is button gedrukt ?
-            if data == BUTTON:
+            if data == 0:
                 buttonPressed = True
             else:
                 # wachten
                 time.sleep(0.1)
         
         # LEDs afwisselend aan/afzetten
-        for port, mask in LEDS.items():
+        for poort, mask in LEDS.items():
             # 1 led aanzetten volgens mask
-            if 'GPA' in port:
+            if 'GPA' in poort:
                 bus.write_byte_data(I2CADR, OLATA, mask)
                 bus.write_byte_data(I2CADR, OLATB, 0b00000000)  # bank 1 afzetten
             else:
@@ -88,6 +92,3 @@ finally:
     bus.write_byte_data(I2CADR, OLATB, 0b00000000)
     # I2C bus afzetten
     bus.close()
-            
-
-

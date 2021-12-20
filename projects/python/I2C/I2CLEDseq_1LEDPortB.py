@@ -33,7 +33,7 @@ OLATA=0x14    # GPA poorten schrijven
 OLATB=0x15    # GPB poorten schrijven
 
 # dictionary met MCP2307 GPA/GPB waarden van de leds
-LEDS={'GPA0':0x01, 'GPA1':0x02, 'GPB7':0x80}
+LEDS={'GPA0':0b00000001, 'GPA1':0b00000010, 'GPB7':0b10000000}
 
 try:
     # I2C bus initialiseren
@@ -46,9 +46,9 @@ try:
     # oneindige lus
     while True:
         # LEDs afwisselend aan/afzetten
-        for port, mask in LEDS.items():
+        for poort, mask in LEDS.items():
             # 1 led aanzetten volgens mask
-            if 'GPA' in port:
+            if 'GPA' in poort:
                 bus.write_byte_data(I2CADR, OLATA, mask)
                 bus.write_byte_data(I2CADR, OLATB, 0b00000000)  # bank 1 afzetten
             else:
@@ -69,6 +69,3 @@ finally:
     bus.write_byte_data(I2CADR, OLATB, 0b00000000)
     # I2C bus afzetten
     bus.close()
-            
-
-

@@ -30,16 +30,15 @@ I2CADR=0x20
 # MCP23017 registers
 IODIRA=0x00   # GPA poorten definieren als input (1) of output (0)
 IODIRB=0x01   # GPB poorten definieren als input (1) of output (0)
+GPPUA=0x0C    # GPA pullup activeren voor input
+GPPUB=0x0D    # GPB pullup activeren voor input 
 GPIOA=0x12    # GPA poorten lezen
 GPIOB=0x13    # GPB poorten lezen
 OLATA=0x14    # GPA poorten schrijven
 OLATB=0x15    # GPB poorten schrijven
 
 # dictionary met MCP2307 GPA/GPB waarden van de leds
-LEDS={'GPA0':0x01, 'GPA1':0x02, 'GPA2':0x04}
-
-# button op GPA7
-BUTTON=0x80
+LEDS={'GPA0':0b00000001, 'GPA1':0b00000010, 'GPA2':0b00000100}
 
 # globale variabelen
 class gvars:
@@ -51,13 +50,14 @@ async def button_pressed():
     while True:
         # waarde pins lezen
         data = bus.read_byte_data(I2CADR, GPIOA)
-        # is button gedrukt ?
-        if data >= BUTTON:
+        # is button gedrukt (bit7 eruit filteren)
+        if data & 128 == 0:
             # button gedrukt
             gvars.started = not gvars.started
             # debounce
-            while data >= BUTTON:
+            while data & 128 == 0:
                 data = bus.read_byte_data(I2CADR, GPIOA)
+                # print(data)
                 await asyncio.sleep(gvars.debounce_time)
         # wachten
         await asyncio.sleep(gvars.debounce_time)
@@ -66,14 +66,14 @@ async def button_pressed():
 async def flash_leds():
     while True:
         # LEDs afwisselend aan/afzetten
-        for port, mask in LEDS.items():
+        for poort, mask in LEDS.items():
             # leds flashen ?
             if not gvars.started:
-                bus.write_byte_data(I2CADR, OLATA, 0b00000000)  # bank 0 afzetten
+                bus.write_byte_data(I2CADR, OLATA, 0b10000000)  # bank 0 afzetten
                 bus.write_byte_data(I2CADR, OLATB, 0b00000000)  # bank 1 afzetten
                 break
             # 1 led aanzetten volgens mask
-            if 'GPA' in port:
+            if 'GPA' in poort:
                 bus.write_byte_data(I2CADR, OLATA, mask)
                 bus.write_byte_data(I2CADR, OLATB, 0b00000000)  # bank 1 afzetten
             else:
@@ -93,6 +93,9 @@ try:
     bus.write_byte_data(I2CADR, IODIRA, 0b10000000)
     bus.write_byte_data(I2CADR, IODIRB, 0b00000000)
     
+    # we maken gebruik van de interne pullup voor GPA7
+    bus.write_byte_data(I2CADR, GPPUA, 0b10000000)
+
     # event loop scheduler initialiseren
     loop = asyncio.get_event_loop()
     # taken op event loop queue te zetten
@@ -115,7 +118,3 @@ finally:
     bus.close()
     # event loop scheduler afzetten
     loop.close()
-    
-            
-
-
