@@ -69,7 +69,7 @@ async def flash_leds():
         for poort, mask in LEDS.items():
             # leds flashen ?
             if not gvars.started:
-                bus.write_byte_data(I2CADR, OLATA, 0b10000000)  # bank 0 afzetten
+                bus.write_byte_data(I2CADR, OLATA, 0b00000000)  # bank 0 afzetten
                 bus.write_byte_data(I2CADR, OLATB, 0b00000000)  # bank 1 afzetten
                 break
             # 1 led aanzetten volgens mask
