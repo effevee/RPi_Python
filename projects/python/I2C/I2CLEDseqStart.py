@@ -62,7 +62,7 @@ try:
             # waarde pins lezen
             data = bus.read_byte_data(I2CADR, GPIOA)
             # is button gedrukt ?
-            if data == 0:
+            if data & 128 == 0:
                 buttonPressed = True
             else:
                 # wachten
