@@ -46,7 +46,6 @@ def read_spi(channel=0):
     data = ((spidata[1] & 3)<<8) + spidata[2]
     return data
 
-
 # initialiseren interfaces
 interface1 = i2c(port=1, address=0x3C)  # interface OLED
 interface2 = pcf8574(address=0x3F, backlight_enabled=True)  # interface PCF8574 LCD1602

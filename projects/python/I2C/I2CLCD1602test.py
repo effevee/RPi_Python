@@ -13,4 +13,3 @@ device = hd44780(interface, width=16, height=2)
 # zet iets op het display
 device.text = 'Welkom in de les\nRaspberry Pi!'
 device.show()
-

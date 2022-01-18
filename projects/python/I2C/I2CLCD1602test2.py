@@ -16,7 +16,6 @@ device = hd44780(interface, width=16, height=2)
 # selectie standaard font
 fnt = device.get_font('A00')
 
-
 def progress_bar(width, height, percentage):
     img = Image.new('1', (width, height))
     drw = ImageDraw.Draw(img)
