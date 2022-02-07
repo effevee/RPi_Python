@@ -8,23 +8,27 @@ piCamera = False
 
 # maken camera object
 if piCamera:
-    webcam0 = VideoStream(src=0, UsePiCamera=True)
+    webcam0 = VideoStream(src=0, UsePiCamera=True, resolution=(640,480))
+    webcam0.start()
 else:
-    webcam0 = VideoStream(src=0)
-
+    webcam0 = cv2.VideoCapture(0)
+    webcam0.set(3,320)
+    webcam0.set(4,240)
+    
 # geen camera object
 if webcam0 is None:
     print("Probleem met openen van USB-camera")
     sys.exit()
 
-# videostream starten
-webcam0.start()
-
 #oneidige lus
 while(True):
     try:
         # Capture frame-by-frame
-        frame = webcam0.read()
+        frame = None
+        if piCamera :
+            frame = webcam0.read()
+        else:
+            success, frame = webcam0.read()
         time.sleep(0.005)
 
         # er is een frame
@@ -34,7 +38,8 @@ while(True):
         # Waits for a user input to quit the application
         if cv2.waitKey(1) & 0xFF == ord('q'):
             # When everything done, release the capture
-            webcam0.stop()
+            if piCamera:
+                webcam0.stop()
             cv2.destroyAllWindows()
             sys.exit()
     
