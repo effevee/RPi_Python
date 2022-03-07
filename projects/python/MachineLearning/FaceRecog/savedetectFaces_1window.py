@@ -5,6 +5,7 @@ import time
 import PySimpleGUI as sg
 from pydrive2.auth import GoogleAuth
 from pydrive2.drive import GoogleDrive
+import os
 
 # PySimpleGUI venster layout
 layout = [  [sg.Text('Is deze foto OK?')],
@@ -114,7 +115,7 @@ while(True):
             imgFile.SetContentFile(fname)
             imgFile.Upload()
             # lokaal bestand verwijderen
-            #os.remove(fname)
+            os.remove(fname)
             # teller ophogen
             cnt += 1
             if cnt > 1000:
