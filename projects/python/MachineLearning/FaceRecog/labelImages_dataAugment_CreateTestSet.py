@@ -9,13 +9,21 @@ FULLPATH = '/home/pi/RPi_Python/projects/python/MachineLearning/FaceRecog/DataPr
 # naar de basismap gaan
 os.chdir(FULLPATH)
 
+# hoogste label opzoeken voor het geval nieuwe personen achteraf toegevoegd worden
+label = 1
+labels = []
+for d in os.listdir():
+    if '_' in d:
+        labels.append(int(d[d.index('_')+1:]))
+if len(labels)>0:
+    label = max(labels) + 1  # label voor nieuwe personen
+    
 # bestaat de map met test beelden ?
 if 'testSet' in os.listdir():
     # verwijder ze
     shutil.rmtree(FULLPATH+'/testSet')
 
 # door de lijst met mappen lopen om labels aan te hangen
-label=1
 for d in os.listdir():
     # sla yml bestand over (training)
     if 'yml' in d:
